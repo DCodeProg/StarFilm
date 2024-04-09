@@ -98,9 +98,14 @@ def my_function(x: int = 0) -> None:
 - Se matérialise par une liste de films ainsi que le nombre d'ajout en favoris
 - Les films sont triés du plus favoris au moins.
 
+## Base de donnée 
+### 1. UML
+
+#### Création du diagramme de classe
+
 ```mermaid
 ---
-title: BDD
+title: Diagramme de classe
 ---
 classDiagram
 
