@@ -97,3 +97,30 @@ def my_function(x: int = 0) -> None:
 #### En tant qu'administrateur je souhaite consulter le nombre d'utilisateurs ayant ajoutés en favoris les films star wars
 - Se matérialise par une liste de films ainsi que le nombre d'ajout en favoris
 - Les films sont triés du plus favoris au moins.
+
+```mermaid
+---
+title: BDD
+---
+classDiagram
+
+    Users <-- Admin
+    Users "*" -- "*" Favorite
+
+    class Users{
+        +Int IdUser
+        +String username
+        +String password
+        +consulterListeFilms()
+        +AjouterFilm()
+        +SupprimerFilm()
+        +connexion()
+    }
+    class Admin{
+        +ConsulterStats()
+    }
+    class Favorite{
+        +Int IdEpisode
+        +consulterDetailsFilm()
+    }
+``` 
