@@ -1,10 +1,11 @@
 import rich
 from rich.console import Console
 
+console = Console()
+
 def app_title():
     """Display app title in concole
     """    
-    console = Console()
     console.print(r""" _____ _              ______ _ _           
 /  ___| |             |  ___(_) |          
 \ `--.| |_ __ _ _ __  | |_   _| |_ __ ___  
