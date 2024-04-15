@@ -2,7 +2,7 @@ import os
 from rich.console import Console
 from rich.table import Table
 
-from starfilm.swapi import swapi
+from .swapi import swapi
 from .utils import *
 
 console = Console()
