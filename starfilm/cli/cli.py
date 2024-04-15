@@ -123,21 +123,22 @@ class CliApp:
         """List all the episode
         """
         
-        episodes_table = Table()
+        episodes_table = Table(header_style="magenta")
         episodes_table.add_column("ID")
         episodes_table.add_column("Title")
+        episodes_table.add_column("Director")
         episodes_table.add_column("Release date")
         
         
         try:
-            for film in self.episodes.items:
-                episodes_table.add_row(str(film.episode_id), film.title, film.release_date)
+            self.episodes
         except:
             self.load_films(False)
-            for film in self.episodes.order_by('episode_id'):
-                episodes_table.add_row(str(film.episode_id), film.title, film.release_date)
+
+        for film in self.episodes.order_by('episode_id'):
+            episodes_table.add_row(str(film.episode_id), film.title, film.director, film.release_date)
             
-        console.print(episodes_table)    
+        console.print(episodes_table)
     
     def load_films(self, show_done: bool = True):
         with console.status("[green]Loading episodes...[/green]") as status:
