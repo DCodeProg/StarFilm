@@ -1,5 +1,5 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, select
-from sqlalchemy.orm import sessionmaker, relationship 
+from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, select, func
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -21,7 +21,7 @@ class Users(Base):
 
     def __repr__(self):
         return f"Users(idUser={self.idUser!r}, username={self.username!r})"
-    
+
     def get_favorites(self, username): 
         """Liste tous les favoris de l'utilisateur
 
@@ -31,10 +31,8 @@ class Users(Base):
         Returns:
             string: liste des Favoris
         """
-
         Session = sessionmaker(bind=self.engine)
         session = Session()
-
         try:
             stmt = (
                 select(Favorites)
@@ -44,7 +42,6 @@ class Users(Base):
             )
             favorites = session.execute(stmt).fetchall()
             return favorites
-        
         except Exception as ex:
             print(ex)
             return None
@@ -56,10 +53,8 @@ class Users(Base):
             username (string): ...
             episode_id (int): ...
         """
-        
         Session = sessionmaker(bind=self.engine)
         session = Session()
-        
         try:
             user = session.query(Users).filter(Users.username == username).first()
             if user:
@@ -72,11 +67,9 @@ class Users(Base):
                 print(f"L'épisode : {episode_id} a été ajouté aux favoris de l'utilisateur {username}.")
             else:
                 print("Vous devez être connecté pour ajouter aux favoris.")
-            
         except Exception as ex:
             session.rollback()
             print(f"Une erreur s'est produite lors de l'ajout du favori : {ex}")
-            
 
     def del_favorites(self, username, episode_id):
         """Supprime un favori de l'utilisateur.
@@ -87,7 +80,6 @@ class Users(Base):
         """
         Session = sessionmaker(bind=self.engine)
         session = Session()
-
         try:
             user = session.query(Users).filter(Users.username == username).first()
             if user:
@@ -103,12 +95,50 @@ class Users(Base):
                 session.commit()
             else:
                 print(f"Vous devez être connecté pour ajouter aux favoris.")
-            
         except Exception as ex:
             session.rollback()
             print(f"Une erreur s'est produite lors de la suppression du favori : {ex}")
 
-    
+class Admin(Users):
+
+    def __init__(self):
+        super().__init__()
+
+    def get_role(self):
+        """Retourne le rôle de l'utilisateur."""
+        if self.roles:
+            return self.roles[0] 
+        else:
+            return None
+
+    def stats_admin(self):
+        """Récupérer tous les favoris."""
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        try: 
+            admin_user = session.query(Users).filter(Users.roles.any(Roles.idRole == 0)).first()
+            if admin_user:
+                query = (
+                    session.query(
+                        Favorites.idEpisode,
+                        func.count(user_has_favorite.idUser)
+                        )
+                        .join(user_has_favorite)
+                        .group_by(Favorites.idEpisode)
+                        .order_by(Favorites.idEpisode.desc())
+                )
+                results = query.all()
+                if results:
+                    for episode_id, count_favorites in results:
+                        print(f"Episode : {episode_id} | NB de fois en favoris : {count_favorites}")
+                else:
+                    print("Aucun favori trouvé.")
+            else:
+                print("Vous devez être administrateur pour accéder à cette fonctionnalité.")
+        except Exception as ex:
+            print(f"Erreur dans la récupération des favoris : {ex}")
+
 class Favorites(Base):
     __tablename__ = "Favorites"
 
@@ -152,9 +182,14 @@ class user_has_role(Base):
 
 ###### add_favorites() #######
 # user = Users()
-# user.add_favorites("test", 2)
+# user.add_favorites("test", 1)
 
 
 ###### del_favorites() #######
 # user = Users()
 # user.del_favorites("test", 2)
+
+
+###### stats_admin() #######
+user = Admin()
+user.stats_admin()
