@@ -97,3 +97,35 @@ def my_function(x: int = 0) -> None:
 #### En tant qu'administrateur je souhaite consulter le nombre d'utilisateurs ayant ajoutés en favoris les films star wars
 - Se matérialise par une liste de films ainsi que le nombre d'ajout en favoris
 - Les films sont triés du plus favoris au moins.
+
+## Base de donnée 
+### 1. UML
+
+#### Création du diagramme de classe
+
+```mermaid
+---
+title: Diagramme de classe
+---
+classDiagram
+
+    Users <-- Admin
+    Users "*" -- "*" Favorite
+
+    class Users{
+        +Int IdUser
+        +String username
+        +String password
+        +consulterListeFilms()
+        +AjouterFilm()
+        +SupprimerFilm()
+        +connexion()
+    }
+    class Admin{
+        +ConsulterStats()
+    }
+    class Favorite{
+        +Int IdEpisode
+        +consulterDetailsFilm()
+    }
+``` 
