@@ -1,3 +1,4 @@
+from exceptions import *
 from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, select, func
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -22,6 +23,13 @@ class Users(Base):
     def __repr__(self):
         return f"Users(idUser={self.idUser!r}, username={self.username!r})"
 
+    def get_role(self):
+        """Retourne le rôle de l'utilisateur."""
+        if self.roles:
+            return self.roles[0] 
+        else:
+            return None
+
     def get_favorites(self, username): 
         """Liste tous les favoris de l'utilisateur
 
@@ -42,9 +50,8 @@ class Users(Base):
             )
             favorites = session.execute(stmt).fetchall()
             return favorites
-        except Exception as ex:
-            print(ex)
-            return None
+        except Exception as e:
+            raise ErrorListFavorites(e)
 
     def add_favorites(self, username, episode_id):
         """Ajoute un épisode aux favoris de l'utilisateur et met à jour les tables Favorites et user_has_favorite.
@@ -65,11 +72,12 @@ class Users(Base):
                 user.favorites.append(new_favorite)
                 session.commit()
                 print(f"L'épisode : {episode_id} a été ajouté aux favoris de l'utilisateur {username}.")
+                return True
             else:
-                print("Vous devez être connecté pour ajouter aux favoris.")
-        except Exception as ex:
+                raise NotConnected
+        except Exception as e:
             session.rollback()
-            print(f"Une erreur s'est produite lors de l'ajout du favori : {ex}")
+            raise ErrorAddingFavorite(e)
 
     def del_favorites(self, username, episode_id):
         """Supprime un favori de l'utilisateur.
@@ -91,25 +99,17 @@ class Users(Base):
                         session.delete(favorite)
                         print(f"L'épisode : {episode_id} a été supprimée.")
                 else:
-                    print(f"Erreur dans la suppression du favoris")
+                    raise ErrorQueryDeleteFavorite
                 session.commit()
             else:
-                print(f"Vous devez être connecté pour ajouter aux favoris.")
-        except Exception as ex:
+                raise NotConnected
+        except Exception as e:
             session.rollback()
-            print(f"Une erreur s'est produite lors de la suppression du favori : {ex}")
-
+            raise ErrorDeleteFavorite(e)
 class Admin(Users):
 
     def __init__(self):
         super().__init__()
-
-    def get_role(self):
-        """Retourne le rôle de l'utilisateur."""
-        if self.roles:
-            return self.roles[0] 
-        else:
-            return None
 
     def stats_admin(self):
         """Récupérer tous les favoris."""
@@ -133,12 +133,11 @@ class Admin(Users):
                     for episode_id, count_favorites in results:
                         print(f"Episode : {episode_id} | NB de fois en favoris : {count_favorites}")
                 else:
-                    print("Aucun favori trouvé.")
+                    raise FavoriteNotFind
             else:
-                print("Vous devez être administrateur pour accéder à cette fonctionnalité.")
-        except Exception as ex:
-            print(f"Erreur dans la récupération des favoris : {ex}")
-
+                raise NotAdmin
+        except Exception as e:
+            raise ErrorRecoveryFavorites
 class Favorites(Base):
     __tablename__ = "Favorites"
 
@@ -182,7 +181,7 @@ class user_has_role(Base):
 
 ###### add_favorites() #######
 # user = Users()
-# user.add_favorites("test", 1)
+# user.add_favorites("test", 5)
 
 
 ###### del_favorites() #######
@@ -191,5 +190,5 @@ class user_has_role(Base):
 
 
 ###### stats_admin() #######
-user = Admin()
-user.stats_admin()
+# user = Admin()
+# user.stats_admin()
