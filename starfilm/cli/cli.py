@@ -134,7 +134,7 @@ class CliApp:
                 episodes_table.add_row(str(film.episode_id), film.title, film.release_date)
         except:
             self.load_films(False)
-            for film in self.episodes.items:
+            for film in self.episodes.order_by('episode_id'):
                 episodes_table.add_row(str(film.episode_id), film.title, film.release_date)
             
         console.print(episodes_table)    
