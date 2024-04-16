@@ -105,27 +105,55 @@ def my_function(x: int = 0) -> None:
 
 ```mermaid
 ---
-title: Diagramme de classe
+tittle: BDD 
 ---
-classDiagram
 
-    Users <-- Admin
-    Users "*" -- "*" Favorite
+classDiagram 
+
+    Users "*" -- "*" Favorites
 
     class Users{
-        +Int IdUser
+        +Int IdUser 
+        +String Username
+        +String Password 
+        +is_admin()
+        +get_favorites()
+        +add_favorite()
+        +del_favorites()
+        +authenticate()
+        +list_all_users()
+    }
+
+    class Favorites{
+        +Int IdEpisode 
+        +get_fav_stats()
+        +list_user_favorites()
+    }
+
+    class CLI{
+        +Bool logged_in
         +String username
-        +String password
-        +consulterListeFilms()
-        +AjouterFilm()
-        +SupprimerFilm()
-        +connexion()
+        +String admin
+        +_app_loop()
+        +show_menu()
+        +quit_menu()
+        +menu_func()
+        +main_menu()
+        +films_menu()
+        +list_episodes()
+        +_load_films()
+        +list_favorites()
+        +add_favorite()
+        +remove_favorite()
+        +auth_menu()
+        +admin_login()
+        +login()
+        +logout()
+        +logout_and_exit()
+        +admin_menu()
+        +fav_stats()
+        +list_users()
+        +list_users_favorites()
+        +credits_menu()
+        +quit()
     }
-    class Admin{
-        +ConsulterStats()
-    }
-    class Favorite{
-        +Int IdEpisode
-        +consulterDetailsFilm()
-    }
-``` 
