@@ -82,3 +82,13 @@ def clear() -> None:
     
     # Clearing the console
     os.system('cls' if os.name == 'nt' else 'clear')
+    
+    
+def login_success() -> None:
+    console = Console()
+    console.print("\nLogin success!", style="green")
+    
+    
+def login_fail() -> None:
+    console = Console()
+    console.print("\nLogin fail!", style="red")
