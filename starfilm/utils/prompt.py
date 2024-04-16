@@ -2,7 +2,7 @@ import os
 from rich.prompt import IntPrompt, Prompt
 
 
-def ask_choice(choices: None | list[tuple[str]] = None, show_choices: bool = False) -> int:
+def ask_choice(choices: None | list = None, show_choices: bool = False) -> int:
     """Ask the user to choice a number corresponding to the given choices
 
     Args:
@@ -23,12 +23,21 @@ def ask_choice(choices: None | list[tuple[str]] = None, show_choices: bool = Fal
     return choice
 
 
+def ask_username() -> str:
+    return Prompt.ask("[blue]Username")
+    
+def ask_password() -> str:
+    return Prompt.ask("[blue]Password", password=True)
+
+def ask_episode_id(list_id: list[str]) -> str:
+    return IntPrompt.ask("[blue]Episode ID", choices=list_id, show_choices=False)
+
+
 def ask_continue() -> None:
-    """Ask the user to press enter to continue
-    """
+    """Ask the user to press enter to return to continue
+    """    
     Prompt.ask("\n[cyan]⇒ Press [ENTER] to continue[/cyan]")
-
-
+    
 def back_to_main_menu() -> None:
     """Ask the user to press enter to return in main menu
     """    
