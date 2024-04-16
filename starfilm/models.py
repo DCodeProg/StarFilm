@@ -169,6 +169,21 @@ class Users(Base):
                 return True
         else:
             return False
+    
+    def list_all_users(self):
+        
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+        try: 
+            list_users = session.query(Users).all()
+            users = []
+            for user in list_users:
+                users.append((user.idUser, user.username))
+            return users
+                
+        except Exception as e: 
+            print(f"Erreur de récupération des utilisateurs : {e}")
+
                         
     
 class Favorites(Base):
@@ -194,21 +209,39 @@ class Favorites(Base):
                 .group_by(Favorites.idEpisode)
                 .order_by(Favorites.idEpisode.desc())
             )
-            
             dict_fav = {}
             results = query.all()
             if results:
                 for episode_id, count_favorites in results:
                     dict_fav[episode_id] = count_favorites
-                    
             return dict_fav
-                
-        
         except Exception as ex:
             print(ex)
             return None
+        
 
+    def list_user_favorites(target_username):
+        """Liste les favoris de l'utilisateur par son nom.
 
+        Args:
+            session: SQLAlchemy
+            target_username (str): target username 
+        """
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        
+        try:
+            target_user = session.query(Users).filter(Users.username == target_username).first()
+            if target_user:
+                favorites = target_user.favorites
+                user_favorites = []
+                for favorite in favorites:
+                    user_favorites.append((target_user.username, favorite.idEpisode))
+                return user_favorites
+            else:
+                print(f"L'utilisateur avec le nom d'utilisateur {target_username} n'existe pas.")
+        except Exception as ex:
+            print(f"Une erreur s'est produite lors de la récupération des favoris : {ex}")
             
 class Roles(Base):
     __tablename__ = "Roles"
@@ -240,10 +273,9 @@ if __name__ == "__main__":
     # user = Users()
     # print(user.get_favorites("test2"))
     ##### add_favorites() #######
-    user = Users()
-    user.add_favorite("client", 1)
-
-    print(Favorites.get_fav_stats())
+    # user = Users()
+    # user.add_favorite("client", 1)
+    # print(Favorites.get_fav_stats())
 
 
     # print(user.get_favorites("test"))

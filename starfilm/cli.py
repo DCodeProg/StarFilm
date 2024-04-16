@@ -321,6 +321,8 @@ class CliApp:
         
         menu_choices = [
             ("Show fav stats", self.fav_stats),
+            ("List all users", self.list_users),
+            ("Get user's favorites", self.list_users_favorites),
             # ("Show user stat", self.list_favorites),
             ("Clear screen", clear_screen),
             ("Main menu", self.quit_menu),
@@ -362,6 +364,48 @@ class CliApp:
             table.add_row(f"{film[0]}", f"{film[1]}", f"{film[2]}", f"{film[3]}", f"{film[4]}")
             
         console.print(table)
+    
+    def list_users(self) -> None:
+        """List all users
+        """
+        
+        user_table = Table(header_style="magenta")
+        user_table.add_column("ID")
+        user_table.add_column("Username")
+                
+        for user in Users().list_all_users():
+            user_table.add_row(str(user[0]), user[1])
+            
+        console.print(user_table)
+
+    def list_users_favorites(self) -> None:
+        """List all users favorites
+        """
+        target = Prompt.ask("Target user wanted")
+        
+        all_username = [user[1] for user in Users().list_all_users()]
+        if not target in all_username:
+            console.print("[red]User not found", style="red")
+            return
+        
+        
+        episodes_table = Table(header_style="magenta")
+        episodes_table.add_column("ID")
+        episodes_table.add_column("Title")
+        episodes_table.add_column("Director")
+        episodes_table.add_column("Release date")
+        
+        
+        with console.status("Loading favorites...") as status:
+            favorites = Users().get_favorites(target)
+
+            for episode in self.episodes.order_by('episode_id'):
+                if episode.episode_id in favorites:
+                    episodes_table.add_row(f"{episode.episode_id}", episode.title, episode.director, episode.release_date) 
+            
+            
+        console.print(episodes_table)
+
     
     "CREDITS MENU"
     def credits_menu(self) -> None:
