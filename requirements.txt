@@ -1,4 +1,3 @@
 rich
-swapy
 sqlalchemy
 requests
