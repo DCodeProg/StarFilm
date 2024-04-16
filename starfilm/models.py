@@ -132,22 +132,19 @@ class Users(Base):
         """
         Session = sessionmaker(bind=self.engine)
         session = Session()
-
+        
         try:
             user = session.query(Users).filter(Users.username == username).first()
             if user:
                 favorite_entry = session.query(user_has_favorite).filter_by(idUser=user.idUser, idEpisode=episode_id).first()
                 if favorite_entry:
                     session.delete(favorite_entry)
-                    favorite = session.query(Favorites).filter_by(idEpisode=episode_id).first()
-                    if favorite:
-                        session.delete(favorite)
-                        print(f"L'épisode : {episode_id} a été supprimée.")
+                    print(f"L'épisode : {episode_id} a été supprimée.")
                 else:
                     print(f"Erreur dans la suppression du favoris")
                 session.commit()
             else:
-                print(f"Vous devez être connecté pour ajouter aux favoris.")
+                print(f"Vous devez être connecté pour retirer un aux favoris.")
             
         except Exception as ex:
             session.rollback()
