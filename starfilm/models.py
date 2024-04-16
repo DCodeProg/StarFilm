@@ -1,7 +1,12 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, select
-from sqlalchemy.orm import sessionmaker, relationship 
-from sqlalchemy.ext.declarative import declarative_base
+import os
+from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, select, insert, func
+from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 
+CUR_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.dirname(CUR_DIR)
+
+db_path = r'sqlite:///' + os.path.join(ROOT_DIR, r'db/db_StarFilm.db')
+engine = create_engine(db_path)
 
 Base = declarative_base()
 
@@ -9,7 +14,7 @@ class Users(Base):
     __tablename__ = "Users"
 
     def __init__(self):
-        db_path = r'sqlite:///db/db_StarFilm.db'
+        db_path = r'sqlite:///' + os.path.join(ROOT_DIR, r'db/db_StarFilm.db')
         self.engine = create_engine(db_path)
 
     idUser = Column(Integer, primary_key=True)
@@ -21,6 +26,31 @@ class Users(Base):
 
     def __repr__(self):
         return f"Users(idUser={self.idUser!r}, username={self.username!r})"
+    
+    def is_admin(self, username):
+
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        try:
+            stmt = (
+                select(Roles.label)
+                .join(user_has_role)
+                .join(Users)
+                .filter(Users.username == username)
+            )
+            
+            list_role = []
+            
+            result = session.execute(stmt)
+            for role in result:
+                list_role.append(role[0])
+                
+            return 'admin' in list_role
+        
+        except Exception as ex:
+            print(ex)
+            return None
     
     def get_favorites(self, username): 
         """Liste tous les favoris de l'utilisateur
@@ -37,19 +67,25 @@ class Users(Base):
 
         try:
             stmt = (
-                select(Favorites)
+                select(Favorites.idEpisode)
                 .join(user_has_favorite)
                 .join(Users)
                 .filter(Users.username == username)
             )
-            favorites = session.execute(stmt).fetchall()
-            return favorites
+            
+            list_fav = []
+            
+            result = session.execute(stmt)
+            for fav in result:
+                list_fav.append(fav[0])
+                
+            return list_fav
         
         except Exception as ex:
             print(ex)
             return None
 
-    def add_favorites(self, username, episode_id):
+    def add_favorite(self, username, episode_id):
         """Ajoute un épisode aux favoris de l'utilisateur et met à jour les tables Favorites et user_has_favorite.
 
         Args:
@@ -66,9 +102,19 @@ class Users(Base):
                 if episode_id in [favorite.idEpisode for favorite in user.favorites]:
                     print("Cet épisode est déjà dans vos favoris.")
                     return
+                
                 new_favorite = Favorites(idEpisode=episode_id)
-                user.favorites.append(new_favorite)
+                                
+                    # # Ajoute l'épisode aux favoris
+                    # new_favorite = Favorites(idEpisode=episode_id)
+                    # session.add(new_favorite)
+                
+                # Met à jour les tables user_has_favorite et Favorites
+                uhf = user_has_favorite(idUser=user.idUser, idEpisode=episode_id)
+                session.add(uhf)
+                
                 session.commit()
+                
                 print(f"L'épisode : {episode_id} a été ajouté aux favoris de l'utilisateur {username}.")
             else:
                 print("Vous devez être connecté pour ajouter aux favoris.")
@@ -77,7 +123,6 @@ class Users(Base):
             session.rollback()
             print(f"Une erreur s'est produite lors de l'ajout du favori : {ex}")
             
-
     def del_favorites(self, username, episode_id):
         """Supprime un favori de l'utilisateur.
 
@@ -108,17 +153,63 @@ class Users(Base):
             session.rollback()
             print(f"Une erreur s'est produite lors de la suppression du favori : {ex}")
 
+    def authenticate(self, username, password) -> bool:
+        """Vérifie si le mot de passe correspond au nom d'utilisateur
+
+        Args:
+            username (str):
+            password (str):
+        """
+
+        Session = sessionmaker(bind=self.engine)
+        session = Session()
+
+        if user:=session.query(Users).filter(Users.username == username).first():
+            if user.password == password:
+                return True
+        else:
+            return False
+                        
     
 class Favorites(Base):
     __tablename__ = "Favorites"
-
+    
     idEpisode = Column(Integer, primary_key=True)
     
-    users = relationship("Users", secondary="user_has_favorite", back_populates="favorites")
+    users = relationship("Users", secondary="user_has_favorite", back_populates="favorites")        
     
     def __repr__(self):
         return f"Favorites(idEpisode={self.idEpisode!r})"
+    
+    def get_fav_stats():
+        Session = sessionmaker(bind=engine)
+        session = Session()
 
+        try:
+            query = (
+                session.query(
+                Favorites.idEpisode,
+                func.count(user_has_favorite.idUser))
+                .join(user_has_favorite)
+                .group_by(Favorites.idEpisode)
+                .order_by(Favorites.idEpisode.desc())
+            )
+            
+            dict_fav = {}
+            results = query.all()
+            if results:
+                for episode_id, count_favorites in results:
+                    dict_fav[episode_id] = count_favorites
+                    
+            return dict_fav
+                
+        
+        except Exception as ex:
+            print(ex)
+            return None
+
+
+            
 class Roles(Base):
     __tablename__ = "Roles"
 
@@ -141,20 +232,22 @@ class user_has_role(Base):
     idRole = Column(Integer, ForeignKey("Roles.idRole"), primary_key=True)
 
 
-# EXEMPLE D'UTILISATION #
+if __name__ == "__main__":
+    ...
+    # EXEMPLE D'UTILISATION #
 
-###### get_favorites() #######
-# user = Users()
-# exemple_favorites = user.get_favorites("test")
-# if exemple_favorites:
-#     print(exemple_favorites)
+    ##### get_favorites() #######
+    # user = Users()
+    # print(user.get_favorites("test2"))
+    ##### add_favorites() #######
+    user = Users()
+    user.add_favorite("client", 1)
+
+    print(Favorites.get_fav_stats())
 
 
-###### add_favorites() #######
-# user = Users()
-# user.add_favorites("test", 2)
+    # print(user.get_favorites("test"))
 
-
-###### del_favorites() #######
-# user = Users()
-# user.del_favorites("test", 2)
+    # ##### del_favorites() #######
+    # user = Users()
+    # user.del_favorites("test", 2)
