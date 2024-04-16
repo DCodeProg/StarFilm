@@ -85,6 +85,7 @@ class CliApp:
         if self.admin:
             menu_choices = [
                 ("Films menu", self.films_menu),
+                ("Characters menu", self.characters_menu),
                 ("Admin menu", self.admin_menu),
                 ("Authentification", self.auth_menu),
                 ("Credits", self.credits_menu),
@@ -93,6 +94,7 @@ class CliApp:
         else:
             menu_choices = [
                 ("Films menu", self.films_menu),
+                ("Characters menu", self.characters_menu),
                 ("Authentification", self.auth_menu),
                 ("Credits", self.credits_menu),
                 ("Quit", self.quit),
@@ -206,7 +208,6 @@ class CliApp:
         if Confirm.ask("[green]Add to favorite?"):
             Users().add_favorite(self.username, choice)
         
-        
     def remove_favorite(self) -> None:
         console.print("[red]Remove Favorite")
         fav_list = Users().get_favorites(self.username)
@@ -224,6 +225,67 @@ class CliApp:
         
         if Confirm.ask("[red]Remove of favorite?"):
             Users().del_favorites(self.username, choice)
+    
+    
+    "CHARACTERS MENU"
+    def characters_menu(self) -> None:
+        """Run the films menu
+        """
+        
+        try:
+            self.characters
+        except:
+            self._load_characters()
+        
+        def clear_screen():
+            self.show_menu('CHARACTERS MENU', menu_choices)
+        
+        menu_choices = [
+            ("Show all characters", self.list_characters),
+            ("Clear screen", clear_screen),
+            ("Main menu", self.quit_menu),
+            ("[dim italic]Refresh characters[/dim italic]", self._load_characters),
+        ]
+            
+        
+        self.show_menu('FILMS MENU', menu_choices)
+        
+        # Menu loop
+        while True:
+            # Ask the user to choice
+            choice = prompt.ask_choice(menu_choices)
+            
+            # If the user select back to main menu, left
+            if menu_choices[choice-1][1] == self.quit_menu:
+                return
+            else:
+                self.menu_func(menu_choices, choice)
+    
+    def list_characters(self) -> None:
+        """List all the episode
+        """
+        
+        characters_table = Table(header_style="magenta")
+        characters_table.add_column("ID")
+        characters_table.add_column("Name")
+        characters_table.add_column("Gender")
+                
+        char_list = []
+        for char in self.characters.order_by('url'):
+            char_list.append((int(char.url.split('/')[-2]), char.name, char.gender))
+            
+        char_list.sort(key=lambda key: key[0])
+        for char in char_list:
+            characters_table.add_row(f"{char[0]}", f"{char[1]}", f"{char[2]}")
+            
+        console.print(characters_table)
+    
+    def _load_characters(self, show_done: bool = True) -> None:
+        with console.status("[green]Loading characters...[/green]") as status:
+            self.characters = swapi.get_all('people')
+            if show_done:
+                console.print("Done", style="green")
+    
     
     
     "AUTH MENU"
@@ -309,13 +371,7 @@ class CliApp:
     "ADMIN MENU"
     def admin_menu(self) -> None:
         """Run the admin menu
-        """
-        
-        try:
-            self.episodes
-        except:
-            self._load_films(False)
-        
+        """        
         def clear_screen():
             self.show_menu('FILMS MENU', menu_choices)
         
@@ -323,7 +379,6 @@ class CliApp:
             ("Show fav stats", self.fav_stats),
             ("List all users", self.list_users),
             ("Get user's favorites", self.list_users_favorites),
-            # ("Show user stat", self.list_favorites),
             ("Clear screen", clear_screen),
             ("Main menu", self.quit_menu),
         ]
@@ -342,6 +397,11 @@ class CliApp:
                 self.menu_func(menu_choices, choice)
     
     def fav_stats(self) -> None:
+        try:
+            self.episodes
+        except:
+            self._load_films(False)
+            
         fav_list = Favorites.get_fav_stats()
         
         table = Table(header_style="magenta")
@@ -381,6 +441,12 @@ class CliApp:
     def list_users_favorites(self) -> None:
         """List all users favorites
         """
+        
+        try:
+            self.episodes
+        except:
+            self._load_films(False)
+        
         target = Prompt.ask("Target user wanted")
         
         all_username = [user[1] for user in Users().list_all_users()]
